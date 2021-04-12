@@ -3,11 +3,30 @@
 #include <string>
 #include <stdio.h>
 using namespace std;
+
+char mySetting[10];
+QFile myFile("mysetting.txt");
+uint8_t SettingIndex =0;
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    if(myFile.exists()==false)
+    {
+        myFile.open(QIODevice::ReadWrite);
+        myFile.write("0", strlen("0"));
+    }
+    else
+    {
+        myFile.open(QIODevice::ReadWrite);
+    }
+    myFile.read(mySetting,sizeof(mySetting));
+    SettingIndex = atoi(mySetting);
+    myFile.close();
     connect(this, &MainWindow::newMessage, this, &MainWindow::displayMessage);
     connect(ui->pushButton,  &QPushButton::clicked, this, &MainWindow::ButtonEvent);
+    ui->comboBox->setCurrentIndex(SettingIndex);
+    displayMessage(QString("INFO :: Init setting :%1").arg(ui->comboBox->itemText(ui->comboBox->currentIndex())));
     ui->statusBar->showMessage("Server is idle");
     m_server = new QTcpServer();
 }
@@ -37,6 +56,10 @@ void MainWindow::ButtonEvent()
            connect(m_server, &QTcpServer::newConnection, this, &MainWindow::newConnection);
            ui->pushButton->setText("Stop Listen");
            ui->statusBar->showMessage(QString("Server is listening at port %1").arg(ui->comboBox->itemText(ui->comboBox->currentIndex())));
+           myFile.open(QIODevice::ReadWrite);
+           myFile.write(to_string(ui->comboBox->currentIndex()).c_str(), strlen(to_string(ui->comboBox->currentIndex()).c_str()));
+           //myFile.write("2", strlen("2"));
+           myFile.close();
            ui->comboBox->setDisabled(1);
         }
         else
